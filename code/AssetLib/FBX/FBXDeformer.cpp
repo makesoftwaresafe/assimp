@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2022, assimp team
+Copyright (c) 2006-2024, assimp team
 
 All rights reserved.
 
@@ -66,13 +66,6 @@ Deformer::Deformer(uint64_t id, const Element& element, const Document& doc, con
 }
 
 // ------------------------------------------------------------------------------------------------
-Deformer::~Deformer()
-{
-
-}
-
-
-// ------------------------------------------------------------------------------------------------
 Cluster::Cluster(uint64_t id, const Element& element, const Document& doc, const std::string& name)
 : Deformer(id,element,doc,name)
 , node()
@@ -88,7 +81,7 @@ Cluster::Cluster(uint64_t id, const Element& element, const Document& doc, const
     transform = ReadMatrix(Transform);
     transformLink = ReadMatrix(TransformLink);
 
-    // it is actually possible that there be Deformer's with no weights
+    // it is actually possible that there are Deformer's with no weights
     if (!!Indexes != !!Weights) {
         DOMError("either Indexes or Weights are missing from Cluster",&element);
     }
@@ -117,14 +110,6 @@ Cluster::Cluster(uint64_t id, const Element& element, const Document& doc, const
     }
 }
 
-
-// ------------------------------------------------------------------------------------------------
-Cluster::~Cluster()
-{
-
-}
-
-
 // ------------------------------------------------------------------------------------------------
 Skin::Skin(uint64_t id, const Element& element, const Document& doc, const std::string& name)
 : Deformer(id,element,doc,name)
@@ -150,12 +135,6 @@ Skin::Skin(uint64_t id, const Element& element, const Document& doc, const std::
     }
 }
 
-
-// ------------------------------------------------------------------------------------------------
-Skin::~Skin()
-{
-
-}
 // ------------------------------------------------------------------------------------------------
 BlendShape::BlendShape(uint64_t id, const Element& element, const Document& doc, const std::string& name)
     : Deformer(id, element, doc, name)
@@ -165,16 +144,14 @@ BlendShape::BlendShape(uint64_t id, const Element& element, const Document& doc,
     for (const Connection* con : conns) {
         const BlendShapeChannel* const bspc = ProcessSimpleConnection<BlendShapeChannel>(*con, false, "BlendShapeChannel -> BlendShape", element);
         if (bspc) {
-            blendShapeChannels.push_back(bspc);
-            continue;
+            auto pr = blendShapeChannels.insert(bspc);
+            if (!pr.second) {
+                FBXImporter::LogWarn("there is the same blendShapeChannel id ", bspc->ID());
+            }
         }
     }
 }
-// ------------------------------------------------------------------------------------------------
-BlendShape::~BlendShape()
-{
 
-}
 // ------------------------------------------------------------------------------------------------
 BlendShapeChannel::BlendShapeChannel(uint64_t id, const Element& element, const Document& doc, const std::string& name)
     : Deformer(id, element, doc, name)
@@ -193,18 +170,15 @@ BlendShapeChannel::BlendShapeChannel(uint64_t id, const Element& element, const 
     for (const Connection* con : conns) {
         const ShapeGeometry* const sg = ProcessSimpleConnection<ShapeGeometry>(*con, false, "Shape -> BlendShapeChannel", element);
         if (sg) {
-            shapeGeometries.push_back(sg);
-            continue;
+            auto pr = shapeGeometries.insert(sg);
+            if (!pr.second) {
+                FBXImporter::LogWarn("there is the same shapeGeometrie id ", sg->ID());
+            }
         }
     }
 }
-// ------------------------------------------------------------------------------------------------
-BlendShapeChannel::~BlendShapeChannel()
-{
 
-}
-// ------------------------------------------------------------------------------------------------
-}
-}
-#endif
+} // namespace FBX
+} // Namespace Assimp
 
+#endif // ASSIMP_BUILD_NO_FBX_IMPORTER
